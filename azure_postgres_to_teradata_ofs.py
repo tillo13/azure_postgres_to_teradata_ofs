@@ -7,6 +7,11 @@ import time
 from dotenv import load_dotenv
 import json
 import warnings
+import re
+
+def clean_text(text):
+    return re.sub(r'[^\x00-\x7F]+', '', str(text))
+
 #ignore pandas alert to use SQLALchemy as psycopg2 is fine.
 warnings.filterwarnings(action='ignore', message='pandas only supports SQLAlchemy connectable')
 
@@ -81,6 +86,12 @@ df['attachment_exists'] = df['attachment_exists'].apply(lambda x: int(x if pd.no
 df['creation_timestamp'] = df['creation_timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S').astype(str)
 df['timestamp_from_endpoint'] = df['timestamp_from_endpoint'].dt.strftime('%Y-%m-%d %H:%M:%S').astype(str)
 df['local_timestamp_from_endpoint'] = df['local_timestamp_from_endpoint'].dt.strftime('%Y-%m-%d %H:%M:%S').astype(str)
+
+# New code to clean up non-ASCII characters
+print("Step 4.5: Cleaning up non-ASCII characters...")
+string_columns = df.select_dtypes(['O']).columns  # get string columns
+for col in string_columns:
+    df[col] = df[col].apply(clean_text)
 
 # Print dtypes
 print("Step 5: Converting the pandas DataFrame column types to Teradata compatible types.")
